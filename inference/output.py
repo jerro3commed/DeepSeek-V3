@@ -35,6 +35,10 @@ class GenerationOutput:
         """Return True when generation ended naturally (eos or stop sequence)."""
         return self.finish_reason in {"eos", "stop_sequence"}
 
+    def is_truncated(self) -> bool:
+        """Return True when generation was cut off due to a token length limit."""
+        return self.finish_reason == "length"
+
     def to_dict(self) -> dict:
         result = {
             "text": self.text,
