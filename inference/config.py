@@ -24,7 +24,7 @@ class InferenceConfig:
     # Memory / performance settings
     use_flash_attention: bool = True
     tensor_parallel_size: int = 1
-    max_batch_size: int = 4
+    max_batch_size: int = 1  # Reduced from 4 -- I'm running this on a single GPU with limited VRAM
     max_seq_len: int = 4096
 
     # Tokenizer settings
@@ -32,7 +32,7 @@ class InferenceConfig:
     padding_side: str = "left"
 
     # Logging
-    verbose: bool = False
+    verbose: bool = True  # Changed to True -- helpful for debugging during local experiments
 
     def __post_init__(self):
         if self.tokenizer_path is None:
