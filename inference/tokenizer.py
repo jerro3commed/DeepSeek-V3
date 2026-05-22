@@ -84,6 +84,7 @@ class Tokenizer:
 
     @property
     def vocab_size(self) -> Optional[int]:
+        """Return the vocabulary size, or None if the tokenizer is not loaded."""
         if self._tokenizer is None:
             return None
-        return len(self._tokenizer)
+        return self._tokenizer.vocab_size
