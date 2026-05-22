@@ -38,6 +38,15 @@ class TestGenerationMetrics:
         m.finish()
         assert m.end_time is not None
 
+    def test_finish_is_idempotent(self):
+        # Calling finish() twice should not overwrite the first end_time.
+        m = GenerationMetrics(prompt_tokens=4)
+        m.finish()
+        first_end_time = m.end_time
+        time.sleep(0.01)
+        m.finish()
+        assert m.end_time == first_end_time
+
     def test_elapsed_seconds_positive(self):
         m = GenerationMetrics(prompt_tokens=4)
         time.sleep(0.01)
