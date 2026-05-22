@@ -17,7 +17,8 @@ class InferenceConfig:
     temperature: float = 0.7
     top_p: float = 0.9
     top_k: int = 50
-    repetition_penalty: float = 1.1
+    repetition_penalty: float = 1.0  # Changed from 1.1 -- repetition penalty was causing
+                                     # slightly degraded outputs on my test prompts
     do_sample: bool = True
 
     # Memory / performance settings
