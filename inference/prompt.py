@@ -31,9 +31,11 @@ CHAT_TEMPLATE = "<|{role}|>\n{content}<|end|>\n"
 ASSISTANT_PROMPT = "<|assistant|>\n"
 
 # Default system prompt I use for most of my personal experiments.
+# Tweaked to also ask for step-by-step reasoning when the question warrants it.
 DEFAULT_SYSTEM_PROMPT = (
     "You are a helpful, concise assistant. "
-    "Answer clearly and avoid unnecessary verbosity."
+    "Answer clearly and avoid unnecessary verbosity. "
+    "When solving problems, briefly show your reasoning step by step."
 )
 
 
