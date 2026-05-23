@@ -81,16 +81,13 @@ class Tokenizer:
         return inputs["input_ids"]
 
     def decode(self, token_ids: List[int], *, skip_special_tokens: bool = True) -> str:
-        """Decode a list of token ids back to a string."""
+        """Decode a list of token ids back to a string.
+
+        Args:
+            token_ids: List of integer token ids to decode.
+            skip_special_tokens: Whether to remove special tokens (e.g. BOS/EOS)
+                from the decoded output. Defaults to True.
+        """
         if not self._loaded:
             raise RuntimeError("Tokenizer is not loaded. Call load() first.")
         return self._tokenizer.decode(token_ids, skip_special_tokens=skip_special_tokens)
-
-    def unload(self) -> None:
-        """Release tokenizer resources."""
-        self._tokenizer = None
-        self._loaded = False
-
-    @property
-    def vocab_size(self) -> Optional[int]:
-        """Return the vo
