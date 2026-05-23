@@ -61,6 +61,13 @@ class TestGenerationMetrics:
         m.finish()
         assert m.tokens_per_second > 0
 
+    def test_tokens_per_second_zero_when_no_tokens(self):
+        # tokens_per_second should be 0 (not an error) when no tokens were generated
+        m = GenerationMetrics(prompt_tokens=4)
+        time.sleep(0.01)
+        m.finish()
+        assert m.tokens_per_second == 0
+
     def test_time_to_first_token_none_before_any_token(self):
         m = GenerationMetrics(prompt_tokens=4)
         assert m.time_to_first_token is None
