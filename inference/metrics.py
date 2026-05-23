@@ -53,6 +53,17 @@ class GenerationMetrics:
             return None
         return self._token_timestamps[0] - self.start_time
 
+    @property
+    def inter_token_latency(self) -> Optional[float]:
+        """Average time between consecutive tokens (excludes time-to-first-token)."""
+        if len(self._token_timestamps) < 2:
+            return None
+        gaps = [
+            self._token_timestamps[i] - self._token_timestamps[i - 1]
+            for i in range(1, len(self._token_timestamps))
+        ]
+        return sum(gaps) / len(gaps)
+
     def to_dict(self) -> dict:
         """Serialize metrics to a plain dictionary."""
         return {
@@ -64,6 +75,11 @@ class GenerationMetrics:
             "time_to_first_token": (
                 round(self.time_to_first_token, 4)
                 if self.time_to_first_token is not None
+                else None
+            ),
+            "inter_token_latency": (
+                round(self.inter_token_latency, 4)
+                if self.inter_token_latency is not None
                 else None
             ),
         }
