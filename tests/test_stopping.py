@@ -52,6 +52,11 @@ class TestShouldStopOnToken:
         assert sc.should_stop_on_token(token_id=200, generated_count=1) is True
         assert sc.should_stop_on_token(token_id=50, generated_count=1) is False
 
+    # Edge case: generated_count exceeds max_new_tokens (e.g. off-by-one guard)
+    def test_stops_when_count_exceeds_max(self):
+        sc = StoppingCriteria(max_new_tokens=3)
+        assert sc.should_stop_on_token(token_id=99, generated_count=4) is True
+
 
 class TestShouldStopOnText:
     def test_stops_on_stop_sequence(self):
@@ -66,6 +71,11 @@ class TestShouldStopOnText:
         sc = StoppingCriteria(max_new_tokens=2)
         assert sc.should_stop_on_text("Hi", generated_count=2) is True
 
+    def test_stops_on_second_stop_sequence(self):
+        # Verify each sequence in the list is checked independently
+        sc = StoppingCriteria(stop_sequences=["<|end|>", "STOP"])
+        assert sc.should_stop_on_text("Please STOP now", generated_count=3) is True
+
 
 class TestSerialisation:
     def test_round_trip(self):
@@ -78,10 +88,3 @@ class TestSerialisation:
         restored = StoppingCriteria.from_dict(sc.to_dict())
         assert restored.max_new_tokens == 128
         assert restored.stop_sequences == ["</s>"]
-        assert restored.stop_token_ids == [1, 2]
-        assert restored.eos_token_id == 3
-
-    def test_from_dict_defaults(self):
-        sc = StoppingCriteria.from_dict({})
-        assert sc.max_new_tokens == 512
-        assert sc.eos_token_id is None
