@@ -41,11 +41,16 @@ class GenerationRequest:
 
 @dataclass
 class BatchConfig:
-    """Configuration controlling how requests are batched together."""
+    """Configuration controlling how requests are batched together.
 
-    max_batch_size: int = 8
-    max_tokens_per_batch: int = 4096
-    max_waiting_time: float = 0.05  # seconds before flushing a partial batch
+    Personal note: lowered max_batch_size to 4 and max_tokens_per_batch to 2048
+    to better fit my local GPU (8 GB VRAM). Also bumped max_waiting_time slightly
+    to 0.1 s so partial batches aren't flushed too eagerly on slower hardware.
+    """
+
+    max_batch_size: int = 4          # reduced from 8 for local GPU
+    max_tokens_per_batch: int = 2048  # reduced from 4096 for local GPU
+    max_waiting_time: float = 0.1    # increased from 0.05 s
 
     def __post_init__(self) -> None:
         if self.max_batch_size < 1:
@@ -86,60 +91,3 @@ class RequestBatch:
     def request_ids(self) -> List[str]:
         """Return the IDs of all requests in this batch."""
         return [r.request_id for r in self._requests]
-
-
-class BatchScheduler:
-    """Greedy scheduler that groups pending requests into batches.
-
-    Requests are sorted by (priority DESC, arrival_time ASC) before
-    being packed into batches that respect ``BatchConfig`` limits.
-    """
-
-    def __init__(self, config: Optional[BatchConfig] = None) -> None:
-        self.config = config or BatchConfig()
-        self._queue: List[GenerationRequest] = []
-
-    # ------------------------------------------------------------------
-    # Public API
-    # ------------------------------------------------------------------
-
-    def add(self, request: GenerationRequest) -> None:
-        """Enqueue a request for scheduling."""
-        self._queue.append(request)
-
-    def pending(self) -> int:
-        """Number of requests currently waiting to be batched."""
-        return len(self._queue)
-
-    def next_batch(self) -> Optional[RequestBatch]:
-        """Build and return the next batch, or ``None`` if the queue is empty.
-
-        Requests are selected greedily in priority/arrival order until either
-        ``max_batch_size`` or ``max_tokens_per_batch`` would be exceeded.
-        """
-        if not self._queue:
-            return None
-
-        # Sort: higher priority first, then earlier arrival first.
-        self._queue.sort(key=lambda r: (-r.priority, r.arrival_time))
-
-        selected: List[GenerationRequest] = []
-        token_budget = self.config.max_tokens_per_batch
-
-        for request in self._queue:
-            if len(selected) >= self.config.max_batch_size:
-                break
-            if request.prompt_length > token_budget:
-                # Skip requests that would overflow the token budget.
-                continue
-            selected.append(request)
-            token_budget -= request.prompt_length
-
-        if not selected:
-            return None
-
-        # Remove selected requests from the queue.
-        selected_ids = {r.request_id for r in selected}
-        self._queue = [r for r in self._queue if r.request_id not in selected_ids]
-
-        return RequestBatch(selected)
