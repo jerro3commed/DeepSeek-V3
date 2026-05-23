@@ -30,6 +30,12 @@ class Message:
 CHAT_TEMPLATE = "<|{role}|>\n{content}<|end|>\n"
 ASSISTANT_PROMPT = "<|assistant|>\n"
 
+# Default system prompt I use for most of my personal experiments.
+DEFAULT_SYSTEM_PROMPT = (
+    "You are a helpful, concise assistant. "
+    "Answer clearly and avoid unnecessary verbosity."
+)
+
 
 def format_chat_prompt(
     messages: List[Message],
@@ -60,14 +66,15 @@ def format_chat_prompt(
 def build_messages(
     user_input: str,
     history: Optional[List[Message]] = None,
-    system_prompt: Optional[str] = None,
+    system_prompt: Optional[str] = DEFAULT_SYSTEM_PROMPT,
 ) -> List[Message]:
     """Convenience helper that constructs a message list from raw inputs.
 
     Args:
         user_input: The latest user message.
         history: Previous messages in the conversation (may be None).
-        system_prompt: If provided, prepend a system message.
+        system_prompt: If provided, prepend a system message. Defaults to
+            ``DEFAULT_SYSTEM_PROMPT``.
 
     Returns:
         A list of :class:`Message` objects.
