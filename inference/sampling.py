@@ -71,7 +71,16 @@ def sample_next_token(
     params: SamplingParams,
     input_ids: Optional[torch.Tensor] = None,
 ) -> torch.Tensor:
-    """Sample the next token id given a logits tensor (batch, vocab)."""
+    """Sample the next token id given a logits tensor (batch, vocab).
+
+    Args:
+        logits: Raw logits from the model, shape (batch, vocab).
+        params: Sampling parameters (temperature, top_p, top_k, etc.).
+        input_ids: Previously generated token ids used for repetition penalty.
+
+    Returns:
+        Sampled token ids, shape (batch, 1).
+    """
     if input_ids is not None:
         logits = apply_repetition_penalty(logits, input_ids, params.repetition_penalty)
 
