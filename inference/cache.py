@@ -11,7 +11,7 @@ import torch
 @dataclass
 class CacheConfig:
     max_batch_size: int = 1
-    max_seq_len: int = 2048
+    max_seq_len: int = 4096  # increased from 2048 to support longer contexts
     num_layers: int = 64
     num_heads: int = 128
     head_dim: int = 128
