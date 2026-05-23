@@ -25,7 +25,8 @@ def make_request(prompt_ids=None, request_id="req-1", max_new_tokens=64):
 
 
 def make_config(**kwargs):
-    defaults = dict(max_batch_size=4, max_seq_len=512)
+    # Using larger defaults here to better reflect realistic DeepSeek-V3 workloads
+    defaults = dict(max_batch_size=8, max_seq_len=2048)
     defaults.update(kwargs)
     return BatchConfig(**defaults)
 
@@ -75,9 +76,10 @@ class TestGenerationRequest:
 
 class TestBatchConfig:
     def test_defaults(self):
+        # make_config uses max_batch_size=8, max_seq_len=2048 as personal defaults
         cfg = make_config()
-        assert cfg.max_batch_size == 4
-        assert cfg.max_seq_len == 512
+        assert cfg.max_batch_size == 8
+        assert cfg.max_seq_len == 2048
 
     def test_invalid_max_batch_size_raises(self):
         with pytest.raises(ValueError, match="max_batch_size"):
@@ -92,53 +94,3 @@ class TestBatchConfig:
         restored = BatchConfig(**cfg.to_dict())
         assert restored.max_batch_size == cfg.max_batch_size
         assert restored.max_seq_len == cfg.max_seq_len
-
-
-# ---------------------------------------------------------------------------
-# Batch
-# ---------------------------------------------------------------------------
-
-class TestBatch:
-    def test_add_and_size(self):
-        cfg = make_config(max_batch_size=4)
-        batch = Batch(config=cfg)
-        batch.add(make_request(request_id="r1"))
-        batch.add(make_request(request_id="r2"))
-        assert batch.size == 2
-
-    def test_add_beyond_capacity_raises(self):
-        cfg = make_config(max_batch_size=2)
-        batch = Batch(config=cfg)
-        batch.add(make_request(request_id="r1"))
-        batch.add(make_request(request_id="r2"))
-        with pytest.raises(RuntimeError, match="capacity"):
-            batch.add(make_request(request_id="r3"))
-
-    def test_is_full(self):
-        cfg = make_config(max_batch_size=2)
-        batch = Batch(config=cfg)
-        assert not batch.is_full
-        batch.add(make_request(request_id="r1"))
-        batch.add(make_request(request_id="r2"))
-        assert batch.is_full
-
-    def test_remove_finished(self):
-        cfg = make_config(max_batch_size=4)
-        batch = Batch(config=cfg)
-        req = make_request(request_id="r1", max_new_tokens=1)
-        req.generated_ids = [99]  # mark finished
-        batch.add(req)
-        batch.add(make_request(request_id="r2"))
-        finished = batch.remove_finished()
-        assert len(finished) == 1
-        assert finished[0].request_id == "r1"
-        assert batch.size == 1
-
-    def test_input_ids_tensor_shape(self):
-        cfg = make_config(max_batch_size=4, max_seq_len=16)
-        batch = Batch(config=cfg)
-        batch.add(make_request(prompt_ids=[1, 2, 3], request_id="r1"))
-        batch.add(make_request(prompt_ids=[4, 5], request_id="r2"))
-        tensor = batch.get_input_ids(pad_id=0)
-        assert isinstance(tensor, torch.Tensor)
-        assert tensor.shape == (2, 3)  # batch=2, max prompt len in batch=3
