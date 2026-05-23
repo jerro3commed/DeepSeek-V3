@@ -25,7 +25,7 @@ class InferenceConfig:
     use_flash_attention: bool = True
     tensor_parallel_size: int = 1
     max_batch_size: int = 1  # Reduced from 4 -- I'm running this on a single GPU with limited VRAM
-    max_seq_len: int = 4096
+    max_seq_len: int = 8192  # Bumped from 4096 -- I often work with long documents/contexts
 
     # Tokenizer settings
     tokenizer_path: Optional[str] = None  # Defaults to model_path if None
@@ -42,6 +42,7 @@ class InferenceConfig:
         )
         assert 0.0 < self.temperature <= 2.0, "temperature must be in (0, 2]"
         assert 0.0 < self.top_p <= 1.0, "top_p must be in (0, 1]"
+        assert self.max_seq_len > 0, "max_seq_len must be positive"
 
     def to_dict(self) -> dict:
         """Serialize config to a plain dict."""
