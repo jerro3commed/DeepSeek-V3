@@ -58,6 +58,14 @@ class TestRepetitionPenalty:
         result = apply_repetition_penalty(logits.clone(), input_ids, penalty=2.0)
         assert result[0, 2] < 3.0
 
+    def test_penalty_increases_negative_logits(self):
+        # A penalty > 1.0 should make negative logits more negative (further penalized).
+        # This checks the sign-aware penalty behavior.
+        logits = torch.tensor([[-1.0, 2.0, 3.0]])
+        input_ids = torch.tensor([[0]])  # token 0 has logit -1.0
+        result = apply_repetition_penalty(logits.clone(), input_ids, penalty=2.0)
+        assert result[0, 0] < -1.0
+
 
 class TestTopKTopP:
     def test_top_k_limits_candidates(self):
