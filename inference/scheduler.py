@@ -18,8 +18,12 @@ from .batch import BatchConfig, BatchManager, GenerationRequest
 class SchedulerConfig:
     """Configuration for the request scheduler."""
 
-    max_batch_size: int = 8
-    """Maximum number of requests to group into a single batch."""
+    max_batch_size: int = 4
+    """Maximum number of requests to group into a single batch.
+
+    Lowered from 8 to 4 for my local single-GPU setup where larger batches
+    cause OOM errors with long-context requests.
+    """
 
     max_waiting_time_ms: float = 50.0
     """Maximum time (ms) a request may wait before it is force-scheduled."""
@@ -92,37 +96,4 @@ class Scheduler:
 
         A batch is considered ready when *either*:
         - The queue holds ``max_batch_size`` or more requests, **or**
-        - The oldest queued request has waited longer than
-          ``max_waiting_time_ms``.
-        """
-        if not self._queue:
-            return False
-        if len(self._queue) >= self._config.max_batch_size:
-            return True
-        oldest = self._queue[0]
-        elapsed_ms = (time.monotonic() - oldest.enqueue_time) * 1_000
-        return elapsed_ms >= self._config.max_waiting_time_ms
-
-    def next_batch(self) -> BatchManager:
-        """Dequeue up to ``max_batch_size`` requests and return a BatchManager.
-
-        Raises:
-            RuntimeError: If the queue is empty.
-        """
-        if not self._queue:
-            raise RuntimeError("No requests in the scheduler queue")
-
-        entries: List[_QueueEntry] = []
-        while self._queue and len(entries) < self._config.max_batch_size:
-            entries.append(self._queue.popleft())
-
-        requests = [e.request for e in entries]
-        batch_cfg = BatchConfig(max_batch_size=len(requests))
-        manager = BatchManager(batch_cfg)
-        for req in requests:
-            manager.add_request(req)
-        return manager
-
-    def clear(self) -> None:
-        """Remove all pending requests from the queue."""
-        self._queue.clear()
+    
