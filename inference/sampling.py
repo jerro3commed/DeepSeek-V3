@@ -11,7 +11,7 @@ class SamplingParams:
     """Parameters controlling token sampling during generation."""
 
     temperature: float = 1.0
-    top_p: float = 1.0
+    top_p: float = 0.95  # changed from 1.0 -- nucleus sampling on by default feels more useful
     top_k: int = 0
     repetition_penalty: float = 1.0
     min_new_tokens: int = 0
@@ -58,6 +58,7 @@ def top_k_top_p_filter(
     if top_p < 1.0:
         sorted_logits, sorted_indices = torch.sort(logits, descending=True)
         cumulative_probs = torch.cumsum(F.softmax(sorted_logits, dim=-1), dim=-1)
+        # shift cumulative probs right so the token that pushes us over top_p is kept
         sorted_indices_to_remove = cumulative_probs - F.softmax(sorted_logits, dim=-1) > top_p
         sorted_logits[sorted_indices_to_remove] = float("-inf")
         logits = torch.zeros_like(logits).scatter_(-1, sorted_indices, sorted_logits)
