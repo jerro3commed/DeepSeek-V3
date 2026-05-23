@@ -59,8 +59,16 @@ class Tokenizer:
         text: Union[str, List[str]],
         *,
         truncation: bool = True,
+        add_special_tokens: bool = True,
     ) -> List[List[int]]:
-        """Encode *text* and return a list of token-id lists."""
+        """Encode *text* and return a list of token-id lists.
+
+        Args:
+            text: A single string or a list of strings to encode.
+            truncation: Whether to truncate sequences to *max_length*.
+            add_special_tokens: Whether to add BOS/EOS and other special tokens.
+                Defaults to True; set to False when you want raw token ids.
+        """
         if not self._loaded:
             raise RuntimeError("Tokenizer is not loaded. Call load() first.")
         inputs = self._tokenizer(
@@ -68,6 +76,7 @@ class Tokenizer:
             truncation=truncation,
             max_length=self.config.max_length,
             padding=False,
+            add_special_tokens=add_special_tokens,
         )
         return inputs["input_ids"]
 
@@ -84,7 +93,4 @@ class Tokenizer:
 
     @property
     def vocab_size(self) -> Optional[int]:
-        """Return the vocabulary size, or None if the tokenizer is not loaded."""
-        if self._tokenizer is None:
-            return None
-        return self._tokenizer.vocab_size
+        """Return the vo
