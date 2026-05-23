@@ -90,3 +90,13 @@ class TestKVCache:
         cache.reset()
         assert cache.seq_len(0) == 0
         assert cache.seq_len(1) == 0
+
+    # NOTE: Added this test to verify that resetting one batch slot does not
+    # affect other slots -- caught a subtle bug in my local experiments.
+    def test_reset_single_does_not_affect_other_slots(self):
+        cache = KVCache(make_config())
+        cache.update(0, 0, torch.ones(3, 4, 8), torch.ones(3, 4, 8))
+        cache.update(0, 1, torch.ones(5, 4, 8), torch.ones(5, 4, 8))
+        cache.reset(batch_idx=0)
+        assert cache.seq_len(0) == 0
+        assert cache.seq_len(1) == 5
